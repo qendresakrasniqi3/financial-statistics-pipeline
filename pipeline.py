@@ -1,6 +1,6 @@
 # =============================================================================
 # pipeline.py
-# Euro Area Payments Statistics Pipeline — Full End-to-End
+# ECB Payments Statistics Pipeline — Full End-to-End
 #
 # 1. INGEST      — Load quarterly payment datasets, schema validation,
 #                  statistical summary
@@ -10,7 +10,7 @@
 #                  statistical indicators, QoQ and YoY calculations
 # 4. ANALYSE     — Country-level trends, outlier detection
 #                  (Z-score, IQR), quarter-on-quarter spike detection
-# 5. REPORT      — Euro Area statistical statistical summary tables,
+# 5. REPORT      — ECB-style statistical summary tables,
 #                  dashboard-ready outputs
 # 6. SQL         — Business queries using sqlite3
 # 7. TEST        — Unit tests, pipeline validation,
@@ -30,7 +30,7 @@ FILE_PATH  = "/mnt/c/Users/qendresa.krasniqi/Downloads/payments_statistics_datas
 OUTPUT_DIR = "/mnt/c/Users/qendresa.krasniqi/Downloads/final_summary"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# --- Controlled vocabularies — mirrors Euro Area payments statistics framework ---
+# --- Controlled vocabularies — mirrors ECB payments statistics framework ---
 # 20 euro area member states (EU countries using the EUR)
 VALID_COUNTRIES   = {"DE","FR","IT","ES","NL","BE","AT","PT","FI","IE",
                      "GR","SK","LU","LT","LV","EE","SI","CY","MT","HR"}
@@ -530,13 +530,13 @@ print(trends.to_string())
 
 # =============================================================================
 # STEP 5 — REPORT
-# Euro Area statistical statistical summary tables | Dashboard-ready outputs
+# ECB-style statistical summary tables | Dashboard-ready outputs
 # Sheets: Payments Statistics | Data Quality Assessment | Country Indicators | Metadata
 # =============================================================================
 
 print("\n" + "="*65)
 print("  STEP 5 — REPORT")
-print("  Euro Area statistical statistical summary tables | Dashboard-ready outputs")
+print("  ECB-style statistical summary tables | Dashboard-ready outputs")
 print("="*65)
 
 styles = make_styles()
@@ -735,17 +735,17 @@ write_sheet(ws_indicators, indicators_export, styles)
 # Sheet 4: Metadata
 ws_meta = wb.create_sheet("Metadata")
 meta_rows = [
-    ("Report Title",     "Euro Area Payments Statistics — Quarterly Series"),
+    ("Report Title",     "ECB Payments Statistics — Quarterly Series"),
     ("Reference Period", "2019-Q1 to 2024-Q4"),
     ("Generated",        datetime.now().strftime("%Y-%m-%d %H:%M")),
-    ("Data Source",      "Synthetic data — Euro Area payments statistics framework"),
+    ("Data Source",      "Synthetic data — ECB payments statistics framework"),
     ("Countries",        ", ".join(sorted(report["Country"].unique()))),
     ("Country Coverage", "20 euro area member states (EU countries using the EUR)"),
     ("Instruments",      ", ".join(sorted(report["Payment Instrument"].unique()))),
     ("Total Rows",       len(report)),
     ("Outliers Flagged", int(report["Outlier Flag"].sum())),
     ("Outlier Flag",     "1 = statistically unusual observation, 0 = normal. Identified using z-score method per country and instrument series."),
-    ("Rounding Note",    "Figures are stored at full precision and displayed rounded to 2 decimal places. Country-level totals in Country Indicators are rounded once after aggregation. Individual rows in Payments Statistics retain full precision — sums may therefore not add up exactly due to rounding, consistent with Euro Area statistical publication practice."),
+    ("Rounding Note",    "Figures are stored at full precision and displayed rounded to 2 decimal places. Country-level totals in Country Indicators are rounded once after aggregation. Individual rows in Payments Statistics retain full precision — sums may therefore not add up exactly due to rounding, consistent with ECB statistical publication practice."),
     ("YoY definition",   "% change vs same quarter one year prior (4 quarters back)"),
 ]
 bold   = Font(bold=True, name="Arial")
@@ -757,8 +757,8 @@ ws_meta.column_dimensions["A"].width = 22
 ws_meta.column_dimensions["B"].width = 70
 
 try:
-    wb.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
-    print(f"\n  Saved → payments_quarterly_report.xlsx")
+    wb.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
+    print(f"\n  Saved → ecb_payments_quarterly_report.xlsx")
     print(f"  Sheets: Payments Statistics | Data Quality Assessment | Country Indicators | Metadata")
 except PermissionError:
     raise PermissionError(
@@ -840,11 +840,11 @@ print(f"  Business question: Which payment instrument grew the most between 2019
 print(df_q3.to_string(index=False))
 
 # Add query result as sheet to the main report
-wb_main = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
+wb_main = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
 ws_q3 = wb_main.create_sheet("Instrument Growth 2019-2024")
 write_sheet(ws_q3, df_q3, styles)
-wb_main.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
-print(f"  Saved → Instrument Growth 2019-2024 sheet added to payments_quarterly_report.xlsx")
+wb_main.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
+print(f"  Saved → Instrument Growth 2019-2024 sheet added to ecb_payments_quarterly_report.xlsx")
 
 conn.close()
 print(f"\n  [SQL] Database connection closed")
@@ -997,10 +997,10 @@ test("Reconciliation — raw vs pipeline totals match",
      f"{n_pass}/{n_total} countries matched")
 
 # Add Reconciliation sheet to existing workbook
-wb2 = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
+wb2 = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
 ws_recon = wb2.create_sheet("Reconciliation")
 write_sheet(ws_recon, recon_df, styles)
-wb2.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
+wb2.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
 print(f"  Reconciliation sheet added to workbook")
 
 # --- Validation Report ---
@@ -1042,7 +1042,7 @@ print("=" * 65)
 print(f"  PIPELINE COMPLETE")
 print(f"  Outputs saved to: {OUTPUT_DIR}")
 print(f"  Files generated:")
-print(f"    • payments_quarterly_report.xlsx")
+print(f"    • ecb_payments_quarterly_report.xlsx")
 print(f"      └─ Payments Statistics        ← quarterly report with QoQ, YoY, Outlier Flag")
 print(f"      └─ Data Quality Assessment    ← country-level DQA report")
 print(f"      └─ Country Indicators         ← country-level summary")
