@@ -1,6 +1,13 @@
 # =============================================================================
 # pipeline.py
-# ECB Payments Statistics Pipeline — Full End-to-End
+# Euro Area Payments Statistics Pipeline — Germany (DE)
+#
+# DISCLAIMER:
+#   This pipeline uses synthetic data generated to approximate real payment
+#   statistics for Germany as published by the ECB. Volumes and values are
+#   calibrated to realistic orders of magnitude but numbers may slightly vary
+#   from official published figures. This dataset is intended for
+#   demonstration purposes only.
 #
 # 1. INGEST      — Load quarterly payment datasets, schema validation,
 #                  statistical summary
@@ -10,7 +17,7 @@
 #                  statistical indicators, QoQ and YoY calculations
 # 4. ANALYSE     — Country-level trends, outlier detection
 #                  (Z-score, IQR), quarter-on-quarter spike detection
-# 5. REPORT      — ECB-style statistical summary tables,
+# 5. REPORT      — Euro Area statistical statistical summary tables,
 #                  dashboard-ready outputs
 # 6. SQL         — Business queries using sqlite3
 # 7. TEST        — Unit tests, pipeline validation,
@@ -30,10 +37,9 @@ FILE_PATH  = "/mnt/c/Users/qendresa.krasniqi/Downloads/payments_statistics_datas
 OUTPUT_DIR = "/mnt/c/Users/qendresa.krasniqi/Downloads/final_summary"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# --- Controlled vocabularies — mirrors ECB payments statistics framework ---
-# 20 euro area member states (EU countries using the EUR)
-VALID_COUNTRIES   = {"DE","FR","IT","ES","NL","BE","AT","PT","FI","IE",
-                     "GR","SK","LU","LT","LV","EE","SI","CY","MT","HR"}
+# --- Controlled vocabularies — mirrors Euro Area payments statistics framework ---
+# Germany (DE) — largest euro area economy
+VALID_COUNTRIES   = {"DE"}
 VALID_INSTRUMENTS = {"credit_transfer","direct_debit","card_payment","e-money","cheque"}
 VALID_TX_TYPES    = {"domestic","cross_border_intra_eu","cross_border_extra_eu"}
 VALID_PSP_TYPES   = {"credit_institution","e-money_institution",
@@ -427,7 +433,7 @@ print(f"\n  [DERIVED] avg_value_eur = total_value_eur_mn × 1M / number_of_trans
 # First quarter per group will be NaN — correct and expected
 df_transactions["qoq_change_pct"] = (
     df_transactions
-    .groupby(["reporting_country", "payment_instrument"])["total_value_eur_mn"]
+    .groupby(["reporting_country", "payment_instrument", "transaction_type"])["total_value_eur_mn"]
     .pct_change() * 100
 ).round(2)
 print(f"  [DERIVED] qoq_change_pct = % change vs previous quarter")
@@ -438,7 +444,7 @@ print(f"  [DERIVED] qoq_change_pct = % change vs previous quarter")
 # First 4 quarters per group will be NaN — correct and expected
 df_transactions["yoy_change_pct"] = (
     df_transactions
-    .groupby(["reporting_country", "payment_instrument"])["total_value_eur_mn"]
+    .groupby(["reporting_country", "payment_instrument", "transaction_type"])["total_value_eur_mn"]
     .pct_change(periods=4) * 100
 ).round(2)
 print(f"  [DERIVED] yoy_change_pct = % change vs same quarter one year prior")
@@ -500,12 +506,11 @@ print("="*65)
 # Z-score value is never exposed in the output — used only to derive the flag
 df_transactions["_zscore"] = (
     df_transactions
-    .groupby(["reporting_country","payment_instrument"])["total_value_eur_mn"]
+    .groupby(["reporting_country","payment_instrument","transaction_type"])["total_value_eur_mn"]
     .transform(lambda x: (x - x.mean()) / x.std())
 )
 
 # Outlier Flag: 1 if z-score exceeds threshold, 0 otherwise
-# This is the only outlier column that appears in the Excel output
 df_transactions["outlier_flag"] = (
     df_transactions["_zscore"].abs() > 3
 ).astype(int)
@@ -517,11 +522,51 @@ total_outliers = df_transactions["outlier_flag"].sum()
 print(f"\n  [OUTLIER]  flagged {total_outliers} rows via z-score (|z| > 3)")
 print(f"  [NOTE]     z-score computed internally — not exposed in output")
 
+# --- IQR outlier detection — used for detailed outlier report ---
+# Identifies values beyond 1.5 x IQR from Q1/Q3 per instrument + transaction type
+# This is what the boxplot visualises
+def detect_iqr_outliers(group):
+    Q1  = group["total_value_eur_mn"].quantile(0.25)
+    Q3  = group["total_value_eur_mn"].quantile(0.75)
+    IQR = Q3 - Q1
+    mask = (
+        (group["total_value_eur_mn"] < Q1 - 1.5 * IQR) |
+        (group["total_value_eur_mn"] > Q3 + 1.5 * IQR)
+    )
+    result = group[mask].copy()
+    result["Q1"]            = round(Q1, 2)
+    result["Q3"]            = round(Q3, 2)
+    result["IQR"]           = round(IQR, 2)
+    result["lower_bound"]   = round(Q1 - 1.5 * IQR, 2)
+    result["upper_bound"]   = round(Q3 + 1.5 * IQR, 2)
+    return result
+
+# Apply IQR detection — use include_groups=False to preserve group keys in result
+outlier_list = []
+for (instrument, txn_type), group in df_transactions.groupby(["payment_instrument","transaction_type"]):
+    result = detect_iqr_outliers(group)
+    outlier_list.append(result)
+
+df_iqr_outliers = pd.concat(outlier_list, ignore_index=True) if outlier_list else pd.DataFrame()
+
+# Add value in EUR bn for readability
+df_iqr_outliers["value_eur_bn"]       = (df_iqr_outliers["total_value_eur_mn"] / 1000).round(2)
+df_iqr_outliers["lower_bound_eur_bn"] = (df_iqr_outliers["lower_bound"] / 1000).round(2)
+df_iqr_outliers["upper_bound_eur_bn"] = (df_iqr_outliers["upper_bound"] / 1000).round(2)
+
+print(f"  [IQR]      flagged {len(df_iqr_outliers)} rows (beyond 1.5×IQR)")
+
+if len(df_iqr_outliers) > 0:
+    print(f"\n  Outlier detail (IQR method):")
+    display_cols = ["quarter","payment_instrument","transaction_type",
+                    "value_eur_bn","lower_bound_eur_bn","upper_bound_eur_bn"]
+    print(df_iqr_outliers[display_cols].to_string(index=False))
+
 # --- Country-level trend summary ---
-print(f"\n  [TRENDS] QoQ and YoY by country (mean across instruments):")
+print(f"\n  [TRENDS] QoQ and YoY by instrument (mean across transaction types):")
 trends = (
     df_transactions
-    .groupby("reporting_country")[["qoq_change_pct","yoy_change_pct"]]
+    .groupby("payment_instrument")[["qoq_change_pct","yoy_change_pct"]]
     .mean().round(2)
     .sort_values("yoy_change_pct", ascending=False)
 )
@@ -530,13 +575,13 @@ print(trends.to_string())
 
 # =============================================================================
 # STEP 5 — REPORT
-# ECB-style statistical summary tables | Dashboard-ready outputs
+# Euro Area statistical statistical summary tables | Dashboard-ready outputs
 # Sheets: Payments Statistics | Data Quality Assessment | Country Indicators | Metadata
 # =============================================================================
 
 print("\n" + "="*65)
 print("  STEP 5 — REPORT")
-print("  ECB-style statistical summary tables | Dashboard-ready outputs")
+print("  Euro Area statistical statistical summary tables | Dashboard-ready outputs")
 print("="*65)
 
 styles = make_styles()
@@ -717,7 +762,30 @@ write_sheet(ws_main, report, styles, flag_col="Outlier_Flag")
 ws_dqa = wb.create_sheet("Data Quality Assessment")
 write_sheet(ws_dqa, dqa_country, styles)
 
-# Sheet 3: Country Indicators
+# Sheet 3: Outlier Report — IQR method detailed findings
+ws_outliers = wb.create_sheet("Outlier Report")
+if len(df_iqr_outliers) > 0:
+    outlier_report = df_iqr_outliers[[
+        "quarter", "payment_instrument", "transaction_type",
+        "value_eur_bn", "lower_bound_eur_bn", "upper_bound_eur_bn",
+        "Q1", "Q3", "IQR"
+    ]].rename(columns={
+        "quarter":              "Quarter",
+        "payment_instrument":   "Payment Instrument",
+        "transaction_type":     "Transaction Type",
+        "value_eur_bn":         "Value (EUR bn)",
+        "lower_bound_eur_bn":   "Lower Bound (EUR bn)",
+        "upper_bound_eur_bn":   "Upper Bound (EUR bn)",
+        "Q1":                   "Q1 (EUR mn)",
+        "Q3":                   "Q3 (EUR mn)",
+        "IQR":                  "IQR (EUR mn)",
+    }).sort_values(["Payment Instrument","Quarter"]).reset_index(drop=True)
+    write_sheet(ws_outliers, outlier_report, styles)
+    print(f"  Outlier Report sheet: {len(outlier_report)} flagged rows")
+else:
+    ws_outliers.cell(row=1, column=1, value="No outliers detected by IQR method.")
+
+# Sheet 4: Country Indicators
 ws_indicators = wb.create_sheet("Country Indicators")
 indicators_export = indicators.rename(columns={
     "reporting_country":      "Country",
@@ -735,17 +803,17 @@ write_sheet(ws_indicators, indicators_export, styles)
 # Sheet 4: Metadata
 ws_meta = wb.create_sheet("Metadata")
 meta_rows = [
-    ("Report Title",     "ECB Payments Statistics — Quarterly Series"),
+    ("Report Title",     "Euro Area Payments Statistics — Quarterly Series"),
     ("Reference Period", "2019-Q1 to 2024-Q4"),
     ("Generated",        datetime.now().strftime("%Y-%m-%d %H:%M")),
-    ("Data Source",      "Synthetic data — ECB payments statistics framework"),
+    ("Data Source",      "Synthetic data — Euro Area payments statistics framework"),
     ("Countries",        ", ".join(sorted(report["Country"].unique()))),
     ("Country Coverage", "20 euro area member states (EU countries using the EUR)"),
     ("Instruments",      ", ".join(sorted(report["Payment Instrument"].unique()))),
     ("Total Rows",       len(report)),
     ("Outliers Flagged", int(report["Outlier Flag"].sum())),
     ("Outlier Flag",     "1 = statistically unusual observation, 0 = normal. Identified using z-score method per country and instrument series."),
-    ("Rounding Note",    "Figures are stored at full precision and displayed rounded to 2 decimal places. Country-level totals in Country Indicators are rounded once after aggregation. Individual rows in Payments Statistics retain full precision — sums may therefore not add up exactly due to rounding, consistent with ECB statistical publication practice."),
+    ("Rounding Note",    "Figures are stored at full precision and displayed rounded to 2 decimal places. Country-level totals in Country Indicators are rounded once after aggregation. Individual rows in Payments Statistics retain full precision — sums may therefore not add up exactly due to rounding, consistent with Euro Area statistical publication practice."),
     ("YoY definition",   "% change vs same quarter one year prior (4 quarters back)"),
 ]
 bold   = Font(bold=True, name="Arial")
@@ -757,8 +825,8 @@ ws_meta.column_dimensions["A"].width = 22
 ws_meta.column_dimensions["B"].width = 70
 
 try:
-    wb.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
-    print(f"\n  Saved → ecb_payments_quarterly_report.xlsx")
+    wb.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
+    print(f"\n  Saved → payments_quarterly_report.xlsx")
     print(f"  Sheets: Payments Statistics | Data Quality Assessment | Country Indicators | Metadata")
 except PermissionError:
     raise PermissionError(
@@ -808,6 +876,7 @@ query3 = """
             ROUND(SUM(number_of_transactions) / 1000000.0, 2)  AS volume_mn_2019
         FROM payments_transactions
         WHERE quarter LIKE '2019%'
+          AND reporting_country = 'DE'
         GROUP BY payment_instrument
     ),
     end_year AS (
@@ -817,6 +886,7 @@ query3 = """
             ROUND(SUM(number_of_transactions) / 1000000.0, 2)  AS volume_mn_2024
         FROM payments_transactions
         WHERE quarter LIKE '2024%'
+          AND reporting_country = 'DE'
         GROUP BY payment_instrument
     )
     SELECT
@@ -840,11 +910,11 @@ print(f"  Business question: Which payment instrument grew the most between 2019
 print(df_q3.to_string(index=False))
 
 # Add query result as sheet to the main report
-wb_main = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
+wb_main = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
 ws_q3 = wb_main.create_sheet("Instrument Growth 2019-2024")
 write_sheet(ws_q3, df_q3, styles)
-wb_main.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
-print(f"  Saved → Instrument Growth 2019-2024 sheet added to ecb_payments_quarterly_report.xlsx")
+wb_main.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
+print(f"  Saved → Instrument Growth 2019-2024 sheet added to payments_quarterly_report.xlsx")
 
 conn.close()
 print(f"\n  [SQL] Database connection closed")
@@ -878,7 +948,7 @@ test("avg_value_eur >= 0",
 
 # Check QoQ is null only for first quarter per group
 first_quarters = df_transactions.groupby(
-    ["reporting_country","payment_instrument"])["quarter"].transform("min")
+    ["reporting_country","payment_instrument","transaction_type"])["quarter"].transform("min")
 expected_nulls = (df_transactions["quarter"] == first_quarters).sum()
 actual_nulls   = df_transactions["qoq_change_pct"].isna().sum()
 test("QoQ null only for first quarter per group",
@@ -889,7 +959,7 @@ test("QoQ null only for first quarter per group",
 actual_yoy_nulls = df_transactions["yoy_change_pct"].isna().sum()
 expected_yoy_nulls = (
     df_transactions
-    .groupby(["reporting_country","payment_instrument"])["quarter"]
+    .groupby(["reporting_country","payment_instrument","transaction_type"])["quarter"]
     .transform(lambda x: (x.rank(method="first") <= 4))
     .sum()
 )
@@ -899,11 +969,11 @@ test("YoY null only for first 4 quarters per group",
 
 print(f"\n  Pipeline Validation:")
 test("Report has expected row count",
-     len(report) == len(df_transactions),
+     len(report) == df_transactions["quarter"].nunique() * df_transactions["payment_instrument"].nunique(),
      f"{len(report):,} rows")
 
-test("All countries present in report",
-     set(report["Country"]) == VALID_COUNTRIES)
+test("Expected country present in report",
+     set(report["Country"]) == {"DE"})
 
 test("All instruments present in report",
      set(report["Payment Instrument"]) == VALID_INSTRUMENTS)
@@ -997,10 +1067,10 @@ test("Reconciliation — raw vs pipeline totals match",
      f"{n_pass}/{n_total} countries matched")
 
 # Add Reconciliation sheet to existing workbook
-wb2 = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
+wb2 = __import__("openpyxl").load_workbook(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
 ws_recon = wb2.create_sheet("Reconciliation")
 write_sheet(ws_recon, recon_df, styles)
-wb2.save(f"{OUTPUT_DIR}/ecb_payments_quarterly_report.xlsx")
+wb2.save(f"{OUTPUT_DIR}/payments_quarterly_report.xlsx")
 print(f"  Reconciliation sheet added to workbook")
 
 # --- Validation Report ---
@@ -1042,7 +1112,7 @@ print("=" * 65)
 print(f"  PIPELINE COMPLETE")
 print(f"  Outputs saved to: {OUTPUT_DIR}")
 print(f"  Files generated:")
-print(f"    • ecb_payments_quarterly_report.xlsx")
+print(f"    • payments_quarterly_report.xlsx")
 print(f"      └─ Payments Statistics        ← quarterly report with QoQ, YoY, Outlier Flag")
 print(f"      └─ Data Quality Assessment    ← country-level DQA report")
 print(f"      └─ Country Indicators         ← country-level summary")
