@@ -39,6 +39,7 @@ df_prep <- df %>%
   filter(
     !is.na(total_value_eur_mn),
     reporting_country == COUNTRY,
+    transaction_type  == "domestic",
     transaction_type  == "domestic"
   ) %>%
   group_by(payment_instrument, quarter) %>%
