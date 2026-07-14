@@ -79,7 +79,7 @@ Missing values are handled using a two-stage strategy:
 - **Numeric fields** (`total_value_eur_mn`, `number_of_transactions`) → imputed with median of same country + instrument group
 - **Key fields** (`reporting_country`, `quarter`, `payment_instrument`) → rows dropped if null — identifiers cannot be imputed
 
-This mirrors real statistical production practice where missing national central bank submissions are estimated from historical series until the actual figure is received.
+This mirrors standard statistical production practice where missing values are estimated from historical series until the actual figure is received.
 
 ---
 
