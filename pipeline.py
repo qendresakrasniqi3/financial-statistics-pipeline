@@ -764,6 +764,9 @@ write_sheet(ws_dqa, dqa_country, styles)
 
 # Sheet 3: Outlier Report — IQR method detailed findings
 ws_outliers = wb.create_sheet("Outlier Report")
+# Note: Outlier Report covers ALL transaction types (domestic + cross-border)
+# The boxplot chart (outlier_boxplot.R) filters to domestic transactions only
+# for visual clarity. Both use the same IQR method (1.5 × IQR from Q1/Q3).
 if len(df_iqr_outliers) > 0:
     outlier_report = df_iqr_outliers[[
         "quarter", "payment_instrument", "transaction_type",
@@ -781,6 +784,13 @@ if len(df_iqr_outliers) > 0:
         "IQR":                  "IQR (EUR mn)",
     }).sort_values(["Payment Instrument","Quarter"]).reset_index(drop=True)
     write_sheet(ws_outliers, outlier_report, styles)
+    # Add note below the table
+    note_row = len(outlier_report) + 3
+    ws_outliers.cell(row=note_row, column=1,
+        value="Note: This report covers all transaction types (domestic + cross-border). "
+              "The boxplot chart filters to domestic transactions only for visual clarity. "
+              "Both use the IQR method (beyond 1.5 × IQR from Q1/Q3)."
+    ).font = Font(name="Arial", size=9, italic=True, color="666666")
     print(f"  Outlier Report sheet: {len(outlier_report)} flagged rows")
 else:
     ws_outliers.cell(row=1, column=1, value="No outliers detected by IQR method.")
