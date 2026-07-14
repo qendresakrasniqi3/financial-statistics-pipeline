@@ -1,14 +1,14 @@
 # Financial Payments Statistics Pipeline — Germany (DE)
 
-A end-to-end payments statistics production pipeline built in Python, R and SQL, modelled on the analytical framework used by the ECB Payments Statistics team.
+A end-to-end payments statistics production pipeline built in Python, R and SQL, modelled on the analytical framework used by the payments statistics production.
 
-> **Disclaimer:** This pipeline uses synthetic data generated to approximate real payment statistics for Germany as published by the ECB. Volumes and values are calibrated to realistic orders of magnitude but numbers may slightly vary from official published figures. This dataset is intended for demonstration purposes only.
+> **Disclaimer:** This pipeline uses synthetic data generated to approximate real payment statistics for Germany as published by the . Volumes and values are calibrated to realistic orders of magnitude but numbers may slightly vary from official published figures. This dataset is intended for demonstration purposes only.
 
 ---
 
 ## Overview
 
-This project simulates a quarterly payments statistics production workflow for Germany, covering data ingestion, validation, transformation, outlier detection, SQL analysis and reporting — mirroring the core tasks of a Research Analyst in the ECB Payments Statistics team.
+This project simulates a quarterly payments statistics production workflow for Germany, covering data ingestion, validation, transformation, outlier detection, SQL analysis and reporting — 
 
 | | |
 |---|---|
@@ -24,18 +24,18 @@ This project simulates a quarterly payments statistics production workflow for G
 ```
 financial-statistics-pipeline/
 │
-├── generate_data.py                    ← generates synthetic raw datasets
-├── pipeline.py                         ← full end-to-end pipeline (7 steps)
-├── statistical_summary.py              ← overall statistical summary
-├── validation.py                       ← standalone data validation checks
-├── queries.sql                         ← YoY and QoQ SQL queries
-├── running_total.sql                   ← running total by country
-├── time_series_chart.R                 ← quarterly time series visualisation
-├── outlier_boxplot.R                   ← outlier detection boxplot
-├── payments_statistics_datasets.xlsx   ← raw synthetic dataset
-├── payments_quarterly_report.xlsx      ← pipeline output report
-├── germany_payments_time_series.jpg    ← time series chart output
-└── germany_outlier_boxplot.jpg         ← boxplot chart output
+├── generate_data.py          ← generates synthetic raw datasets
+├── pipeline.py             ← full end-to-end pipeline (7 steps)
+├── statistical_summary.py       ← overall statistical summary
+├── validation.py            ← standalone data validation checks
+├── queries.sql             ← YoY and QoQ SQL queries
+├── running_total.sql          ← running total by country
+├── time_series_chart.R         ← quarterly time series visualisation
+├── outlier_boxplot.R          ← outlier detection boxplot
+├── payments_statistics_datasets.xlsx  ← raw synthetic dataset
+├── payments_quarterly_report.xlsx   ← pipeline output report
+├── germany_payments_time_series.jpg  ← time series chart output
+└── germany_outlier_boxplot.jpg     ← boxplot chart output
 ```
 
 ---
@@ -79,7 +79,7 @@ Missing values are handled using a two-stage strategy:
 - **Numeric fields** (`total_value_eur_mn`, `number_of_transactions`) → imputed with median of same country + instrument group
 - **Key fields** (`reporting_country`, `quarter`, `payment_instrument`) → rows dropped if null — identifiers cannot be imputed
 
-This mirrors real ECB statistical production practice where missing national central bank submissions are estimated from historical series until the actual figure is received.
+This mirrors real statistical production practice where missing national central bank submissions are estimated from historical series until the actual figure is received.
 
 ---
 
@@ -185,10 +185,10 @@ Rscript outlier_boxplot.R
 
 ```
 Business rules : 17 passed / 0 failed
-Unit tests     : 14 passed / 0 failed
+Unit tests   : 14 passed / 0 failed
 Reconciliation : 1/1 countries matched
 ```
 
 ---
 
-*Built as a technical portfolio project demonstrating payments statistics production skills aligned with the ECB Research Analyst — Payments Statistics role.*
+*Built as a technical portfolio project demonstrating payments statistics production skills aligned with the payments statistics research analyst role.*
