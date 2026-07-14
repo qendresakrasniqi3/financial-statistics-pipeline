@@ -100,14 +100,13 @@ Z-score is computed entirely in the backend — only the binary flag (0/1) is ex
 
 ## SQL Queries
 
-Queries run via Python's built-in `sqlite3` — no external database required:
+Queries run via Python's built-in `sqlite3` — no external database required.
 
-| File | Query | Description |
-|------|-------|-------------|
-| `queries.sql` | YoY Growth | Absolute and % change vs same quarter one year prior |
-| `queries.sql` | QoQ Growth | Absolute and % change vs immediately preceding quarter |
-| `running_total.sql` | Running Total | Cumulative transaction value over time |
-| `pipeline.py` | Instrument Growth | 2019 vs 2024 comparison using CTEs (pure SQL) |
+**Inside pipeline.py (Step 6):**
+
+| Query | Description |
+|-------|-------------|
+| Instrument Growth 2019 vs 2024 | Pure SQL using CTEs — which instrument grew most over 5 years? Results saved as a sheet in the Excel report |
 
 ---
 
