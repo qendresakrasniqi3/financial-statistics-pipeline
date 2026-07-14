@@ -24,12 +24,15 @@ This project simulates a quarterly payments statistics production workflow for G
 ```
 financial-statistics-pipeline/
 │
-├── generate_data.py          ← generates synthetic raw datasets
-├── pipeline.py             ← full end-to-end pipeline (7 steps)
-├── time_series_chart.R         ← quarterly time series visualisation
-├── outlier_boxplot.R          ← outlier detection boxplot
-├── payments_statistics_datasets.xlsx  ← raw synthetic dataset
-├── payments_quarterly_report.xlsx   ← pipeline output report
+├── generate_data.py                    ← generates synthetic raw datasets
+├── pipeline.py                         ← full end-to-end pipeline (7 steps)
+├── time_series_chart.R                 ← quarterly time series visualisation
+├── outlier_boxplot.R                   ← outlier detection boxplot
+├── payments_statistics_datasets.xlsx   ← raw synthetic dataset
+├── payments_quarterly_report.xlsx      ← pipeline output report
+├── germany_payments_time_series.jpg    ← time series chart output
+├── germany_outlier_boxplot.jpg         ← outlier detection boxplot output
+└── README.md                           ← project documentation
 ```
 
 ---
