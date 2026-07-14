@@ -118,12 +118,12 @@ Queries run via Python's built-in `sqlite3` — no external database required.
 
 ## Statistical Summary
 
+Step 1 of the pipeline prints a statistical summary of transaction values:
 
 ```
-Count, Mean, Median, Std Dev, Variance, Min, Max, Q1, Q3, IQR, Skewness, Kurtosis, CV (%)
+Min, Max, Mean, Median, Std Dev — overall
+Mean, Min, Max, Median — by payment instrument
 ```
-
-The data is right-skewed (skewness > 3) due to the mix of instruments — credit transfers dominate by value while cheques are negligible. This is consistent with real German payment statistics.
 
 ---
 
