@@ -4,7 +4,7 @@
 #
 # DISCLAIMER:
 #   This pipeline uses synthetic data generated to approximate real payment
-#   statistics for Germany as published by the ECB. Volumes and values are
+#   statistics for Germany as published online. Volumes and values are
 #   calibrated to realistic orders of magnitude but numbers may slightly vary
 #   from official published figures. This dataset is intended for
 #   demonstration purposes only.
@@ -813,7 +813,7 @@ write_sheet(ws_indicators, indicators_export, styles)
 # Sheet 4: Metadata
 ws_meta = wb.create_sheet("Metadata")
 meta_rows = [
-    ("Report Title",     "Euro Area Payments Statistics — Quarterly Series"),
+    ("Report Title",     "Germany Payments Statistics — Quarterly Series"),
     ("Reference Period", "2019-Q1 to 2024-Q4"),
     ("Generated",        datetime.now().strftime("%Y-%m-%d %H:%M")),
     ("Data Source",      "Synthetic data — Euro Area payments statistics framework"),
