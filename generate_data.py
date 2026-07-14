@@ -1,7 +1,7 @@
 # =============================================================================
 # generate_data.py
 # Generates synthetic payments statistics datasets for Germany (DE).
-# Data is calibrated to approximate real ECB payments statistics for Germany.
+# Data is calibrated to approximate real payments statistics for Germany.
 #
 # DISCLAIMER:
 #   This is synthetic data intended for demonstration purposes only.
@@ -29,7 +29,7 @@ random.seed(42)
 OUTPUT_PATH = "/mnt/c/Users/qendresa.krasniqi/Downloads/payments_statistics_datasets.xlsx"
 
 # --- CONFIG ---
-# Germany only — largest euro area economy and ECB payments statistics reporter
+# Germany only — largest euro area economy
 COUNTRY             = "DE"
 PAYMENT_INSTRUMENTS = ["credit_transfer","direct_debit","card_payment","e-money","cheque"]
 QUARTERS            = [f"{y}Q{q}" for y in range(2019, 2025) for q in range(1, 5)]
@@ -39,7 +39,7 @@ TRANSACTION_TYPES   = ["domestic","cross_border_intra_eu","cross_border_extra_eu
 
 # =============================================================================
 # 1. PAYMENT TRANSACTIONS QUARTERLY
-# Germany-calibrated volumes and values based on ECB published statistics:
+# Germany-calibrated volumes and values based on publicly available payment statistics:
 #   - Credit transfers: ~600 mn per quarter, avg ~3,500 EUR (retail + corporate)
 #   - Direct debits:    ~3 bn per quarter,  avg ~200 EUR  (utilities, subscriptions)
 #   - Card payments:    ~4 bn per quarter,  avg ~55 EUR   (retail POS + online)
@@ -121,7 +121,7 @@ print(f"1. transactions — {len(df_transactions):,} rows | "
 # 2. PSP REFERENCE DATA — Germany-based PSPs
 # =============================================================================
 psp_types = ["credit_institution","e-money_institution","payment_institution","post_office"]
-n_psps    = 50  # Germany has ~50 major PSPs reporting to Bundesbank
+n_psps    = 50  # Germany-based Payment Service Providers
 psp_ids   = [f"PSP_DE_{str(i).zfill(3)}" for i in range(1, n_psps+1)]
 
 df_psps = pd.DataFrame({
