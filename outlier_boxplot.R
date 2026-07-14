@@ -3,7 +3,7 @@
 # Payments Statistics — Outlier Detection Visualisation
 #
 # Chart: Boxplot of total payment value (EUR bn) by instrument
-#        Germany (DE) | All transaction types | 2019-Q1 to 2024-Q4
+#        Germany (DE) | Domestic transactions | 2019-Q1 to 2024-Q4
 #        Outliers highlighted as red points above/below whiskers
 # =============================================================================
 
@@ -38,7 +38,8 @@ cat(sprintf("[PREPARE] Filtering to %s...\n", COUNTRY))
 df_prep <- df %>%
   filter(
     !is.na(total_value_eur_mn),
-    reporting_country == COUNTRY
+    reporting_country == COUNTRY,
+    transaction_type  == "domestic"
   ) %>%
   group_by(payment_instrument, quarter) %>%
   summarise(
@@ -150,7 +151,7 @@ p <- ggplot(df_prep, aes(
 
   labs(
     title    = "Germany — Payment Value Distribution by Instrument",
-    subtitle = "All transaction types  |  Quarterly observations, 2019-Q1 to 2024-Q4  |  EUR bn",
+    subtitle = "Domestic transactions  |  Quarterly observations, 2019-Q1 to 2024-Q4  |  EUR bn",
     x        = NULL,
     y        = "Total Value (EUR bn)",
     caption  = "Source: Synthetic data — Euro Area payments statistics framework  |  Country: DE\nOutliers identified using IQR method (beyond 1.5 × IQR from Q1/Q3)"
