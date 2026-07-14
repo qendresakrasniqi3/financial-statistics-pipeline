@@ -26,16 +26,10 @@ financial-statistics-pipeline/
 │
 ├── generate_data.py          ← generates synthetic raw datasets
 ├── pipeline.py             ← full end-to-end pipeline (7 steps)
-├── statistical_summary.py       ← overall statistical summary
-├── validation.py            ← standalone data validation checks
-├── queries.sql             ← YoY and QoQ SQL queries
-├── running_total.sql          ← running total by country
 ├── time_series_chart.R         ← quarterly time series visualisation
 ├── outlier_boxplot.R          ← outlier detection boxplot
 ├── payments_statistics_datasets.xlsx  ← raw synthetic dataset
 ├── payments_quarterly_report.xlsx   ← pipeline output report
-├── germany_payments_time_series.jpg  ← time series chart output
-└── germany_outlier_boxplot.jpg     ← boxplot chart output
 ```
 
 ---
@@ -121,7 +115,6 @@ Queries run via Python's built-in `sqlite3` — no external database required.
 
 ## Statistical Summary
 
-Run `statistical_summary.py` for full descriptive statistics:
 
 ```
 Count, Mean, Median, Std Dev, Variance, Min, Max, Q1, Q3, IQR, Skewness, Kurtosis, CV (%)
@@ -155,12 +148,9 @@ python3 pipeline.py
 
 **5. Run statistical summary:**
 ```bash
-python3 statistical_summary.py
 ```
 
-**6. Run standalone data validation:**
 ```bash
-python3 validation.py
 ```
 
 **7. Generate charts (update paths in scripts first):**
