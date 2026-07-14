@@ -2,7 +2,7 @@
 
 A end-to-end payments statistics production pipeline built in Python, R and SQL, modelled on the analytical framework used by the payments statistics production.
 
-> **Disclaimer:** This pipeline uses synthetic data generated to approximate real payment statistics for Germany as published by the . Volumes and values are calibrated to realistic orders of magnitude but numbers may slightly vary from official published figures. This dataset is intended for demonstration purposes only.
+> **Disclaimer:** This pipeline uses synthetic data generated to approximate real payment statistics for Germany as published online. Volumes and values are calibrated to realistic orders of magnitude but numbers may slightly vary from official published figures. This dataset is intended for demonstration purposes only.
 
 ---
 
