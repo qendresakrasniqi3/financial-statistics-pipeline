@@ -17,7 +17,7 @@
 #                  statistical indicators, QoQ and YoY calculations
 # 4. ANALYSE     — Country-level trends, outlier detection
 #                  (Z-score, IQR), quarter-on-quarter spike detection
-# 5. REPORT      — Euro Area statistical statistical summary tables,
+# 5. REPORT      — Germany payments statistical summary tables,
 #                  dashboard-ready outputs
 # 6. SQL         — Business queries using sqlite3
 # 7. TEST        — Unit tests, pipeline validation,
@@ -575,13 +575,13 @@ print(trends.to_string())
 
 # =============================================================================
 # STEP 5 — REPORT
-# Euro Area statistical statistical summary tables | Dashboard-ready outputs
+# Germany payments statistical summary tables | Dashboard-ready outputs
 # Sheets: Payments Statistics | Data Quality Assessment | Country Indicators | Metadata
 # =============================================================================
 
 print("\n" + "="*65)
 print("  STEP 5 — REPORT")
-print("  Euro Area statistical statistical summary tables | Dashboard-ready outputs")
+print("  Germany payments statistical summary tables | Dashboard-ready outputs")
 print("="*65)
 
 styles = make_styles()
@@ -808,7 +808,7 @@ meta_rows = [
     ("Generated",        datetime.now().strftime("%Y-%m-%d %H:%M")),
     ("Data Source",      "Synthetic data — Euro Area payments statistics framework"),
     ("Countries",        ", ".join(sorted(report["Country"].unique()))),
-    ("Country Coverage", "20 euro area member states (EU countries using the EUR)"),
+    ("Country Coverage", "Germany (DE) — largest euro area economy"),
     ("Instruments",      ", ".join(sorted(report["Payment Instrument"].unique()))),
     ("Total Rows",       len(report)),
     ("Outliers Flagged", int(report["Outlier Flag"].sum())),
