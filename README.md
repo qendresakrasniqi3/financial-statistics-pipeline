@@ -149,14 +149,7 @@ python3 generate_data.py
 python3 pipeline.py
 ```
 
-**5. Run statistical summary:**
-```bash
-```
-
-```bash
-```
-
-**7. Generate charts (update paths in scripts first):**
+**5. Generate charts (update paths in scripts first):**
 ```bash
 Rscript time_series_chart.R
 Rscript outlier_boxplot.R
